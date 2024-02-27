@@ -1,0 +1,38 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+  up:
+    - docker compose up -d
+  logs:
+    - docker compose logs -f
+  down:
+    - docker compose down
+
+  certs:
+    - certgen -host "127.0.0.1,localhost,minio.local"
+  mc:
+    - docker run--name my-mc --hostname my-mc -v $(pwd)/mc:/root/.mc -it --entrypoint /bin/bash --rm minio/mc
+  minio:
+    cmds:
+      - |
+        docker run -dt \
+        --restart=always \
+        -p 9000:9000 -p 9001:9001 \
+        -v $(pwd)/data:/mnt/data \
+        -v $(pwd)/certs:/etc/certs \
+        -v $(pwd)/minio.env:/etc/default/minio \
+        -v /etc/timezone:/etc/timezone:ro \
+        -e TZ=Asia/Bangkok \
+        --user $(id -u):$(id -g) \
+        --hostname local-minio.moph.go.th \
+        --name minio_local \
+        quay.io/minio/minio:latest server /mnt/data --console-address ":9001"
